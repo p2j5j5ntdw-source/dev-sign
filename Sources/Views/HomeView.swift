@@ -100,3 +100,39 @@ struct HomeView: View {
         }
     }
 }
+// شاشة فارغة
+struct EmptyStateView: View {
+    @Binding var showFilePicker: Bool
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            Spacer()
+            
+            Image(systemName: "flame.fill")
+                .font(.system(size: 80))
+                .foregroundColor(.red)
+            
+            Text("Devil Sign")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+            
+            Text("استورد ملف IPA للبدء")
+                .font(.subheadline)
+                .foregroundColor(.gray)
+            
+            Button {
+                showFilePicker = true
+            } label: {
+                Label("استورد IPA", systemImage: "plus.circle.fill")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .padding()
+                    .background(Color.red)
+                    .cornerRadius(12)
+            }
+            
+            Spacer()
+        }
+    }
+}
