@@ -1,6 +1,44 @@
 import SwiftUI
 import UniformTypeIdentifiers
+import UIKit
 
+// MARK: - Document Picker
+struct DocumentPicker: UIViewControllerRepresentable {
+    let types: [UTType]
+    let onPick: (Data) -> Void
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onPick: onPick)
+    }
+    
+    func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: types)
+        picker.delegate = context.coordinator
+        picker.allowsMultipleSelection = false
+        return picker
+    }
+    
+    func updateUIViewController(_ uiViewController: UIDocumentPickerViewController, context: Context) {}
+    
+    class Coordinator: NSObject, UIDocumentPickerDelegate {
+        let onPick: (Data) -> Void
+        
+        init(onPick: @escaping (Data) -> Void) {
+            self.onPick = onPick
+        }
+        
+        func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+            guard let url = urls.first else { return }
+            guard url.startAccessingSecurityScopedResource() else { return }
+            defer { url.stopAccessingSecurityScopedResource() }
+            if let data = try? Data(contentsOf: url) {
+                onPick(data)
+            }
+        }
+    }
+}
+
+// MARK: - Certificate View
 struct CertificateView: View {
     @EnvironmentObject var certManager: CertificateManager
     @State private var showAddCert = false
@@ -38,7 +76,7 @@ struct CertificateView: View {
     }
 }
 
-// قائمة الشهادات
+// MARK: - Certificate List
 struct CertListView: View {
     @Binding var certificates: [Certificate]
     @Binding var showAddCert: Bool
@@ -57,7 +95,7 @@ struct CertListView: View {
     }
 }
 
-// صف شهادة واحدة
+// MARK: - Certificate Row
 struct CertRowView: View {
     let cert: Certificate
     
@@ -92,27 +130,23 @@ struct CertRowView: View {
     }
 }
 
-// شاشة فارغة
+// MARK: - Empty State
 struct EmptyCertView: View {
     @Binding var showAddCert: Bool
     
     var body: some View {
         VStack(spacing: 20) {
             Spacer()
-            
             Image(systemName: "seal.fill")
                 .font(.system(size: 70))
                 .foregroundColor(.red)
-            
             Text("لا توجد شهادات")
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundColor(.white)
-            
             Text("أضف شهادتك للبدء في التوقيع")
                 .font(.subheadline)
                 .foregroundColor(.gray)
-            
             Button {
                 showAddCert = true
             } label: {
@@ -123,13 +157,12 @@ struct EmptyCertView: View {
                     .background(Color.red)
                     .cornerRadius(12)
             }
-            
             Spacer()
         }
     }
 }
 
-// شاشة إضافة شهادة
+// MARK: - Add Certificate
 struct AddCertificateView: View {
     @ObservedObject var certManager: CertificateManager
     @Environment(\.dismiss) var dismiss
@@ -140,8 +173,6 @@ struct AddCertificateView: View {
     @State private var showProvPicker = false
     @State private var p12Data: Data?
     @State private var provData: Data?
-    @State private var showError = false
-    @State private var errorMessage = ""
     
     var canSave: Bool {
         !certName.isEmpty && p12Data != nil && provData != nil
@@ -251,40 +282,23 @@ struct AddCertificateView: View {
                         .foregroundColor(.red)
                 }
             }
-            .fileImporter(
-                isPresented: $showP12Picker,
-                allowedContentTypes: [UTType(filenameExtension: "p12") ?? .data],
-                allowsMultipleSelection: false
-            ) { result in
-                switch result {
-                case .success(let urls):
-                    guard let url = urls.first else { return }
-                    guard url.startAccessingSecurityScopedResource() else { return }
-                    defer { url.stopAccessingSecurityScopedResource() }
-                    p12Data = try? Data(contentsOf: url)
-                case .failure:
-                    break
+            // P12 Picker
+            .sheet(isPresented: $showP12Picker) {
+                DocumentPicker(
+                    types: [UTType(filenameExtension: "p12") ?? .data]
+                ) { data in
+                    p12Data = data
                 }
+                .ignoresSafeArea()
             }
-            .fileImporter(
-                isPresented: $showProvPicker,
-                allowedContentTypes: [UTType(filenameExtension: "mobileprovision") ?? .data],
-                allowsMultipleSelection: false
-            ) { result in
-                switch result {
-                case .success(let urls):
-                    guard let url = urls.first else { return }
-                    guard url.startAccessingSecurityScopedResource() else { return }
-                    defer { url.stopAccessingSecurityScopedResource() }
-                    provData = try? Data(contentsOf: url)
-                case .failure:
-                    break
+            // Provisioning Picker
+            .sheet(isPresented: $showProvPicker) {
+                DocumentPicker(
+                    types: [UTType(filenameExtension: "mobileprovision") ?? .data]
+                ) { data in
+                    provData = data
                 }
-            }
-            .alert("خطأ", isPresented: $showError) {
-                Button("حسناً", role: .cancel) {}
-            } message: {
-                Text(errorMessage)
+                .ignoresSafeArea()
             }
         }
         .preferredColorScheme(.dark)
@@ -292,7 +306,6 @@ struct AddCertificateView: View {
     
     private func saveCertificate() {
         guard let p12 = p12Data, let prov = provData else { return }
-        
         let cert = Certificate(
             name: certName,
             p12Data: p12,
@@ -300,7 +313,6 @@ struct AddCertificateView: View {
             provisioningData: prov,
             teamID: teamID
         )
-        
         certManager.addCertificate(cert)
         dismiss()
     }
