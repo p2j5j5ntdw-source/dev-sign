@@ -39,9 +39,16 @@ jobs:
           -derivedDataPath DerivedData \
           CODE_SIGNING_ALLOWED=NO
 
-    - name: Upload Build
+    - name: Package IPA
+      run: |
+        mkdir -p Payload
+        cp -r DerivedData/Build/Products/Release-iphoneos/DevilSign.app Payload/
+        zip -r DevilSign.ipa Payload
+        rm -rf Payload
+
+    - name: Upload IPA
       uses: actions/upload-artifact@v4
       with:
-        name: DevilSign-Build
-        path: DerivedData/Build/Products/Release-iphoneos/
+        name: DevilSign
+        path: DevilSign.ipa
         retention-days: 30
