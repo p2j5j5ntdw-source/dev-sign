@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct CertificateView: View {
-    @StateObject private var certManager = CertificateManager()
+    @EnvironmentObject var certManager: CertificateManager
     @State private var showAddCert = false
     
     var body: some View {
