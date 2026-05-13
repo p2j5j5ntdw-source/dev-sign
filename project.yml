@@ -33,3 +33,43 @@ targets:
           - UIInterfaceOrientationPortrait
         LSSupportsOpeningDocumentsInPlace: true
         UIFileSharingEnabled: true
+        NSDocumentsFolderUsageDescription: "يحتاج التطبيق للوصول للملفات لاستيراد شهادات IPA"
+        NSFileProviderDomainUsageDescription: "يحتاج التطبيق للوصول للملفات"
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: IPA File
+            CFBundleTypeRole: Viewer
+            LSItemContentTypes:
+              - com.apple.itunes.ipa
+            LSHandlerRank: Owner
+          - CFBundleTypeName: P12 Certificate
+            CFBundleTypeRole: Viewer
+            LSItemContentTypes:
+              - com.rsa.pkcs-12
+            LSHandlerRank: Owner
+          - CFBundleTypeName: Provisioning Profile
+            CFBundleTypeRole: Viewer
+            LSItemContentTypes:
+              - com.apple.mobileprovision
+            LSHandlerRank: Owner
+        UTImportedTypeDeclarations:
+          - UTTypeIdentifier: com.apple.itunes.ipa
+            UTTypeDescription: IPA File
+            UTTypeConformsTo:
+              - public.data
+            UTTypeTagSpecification:
+              public.filename-extension:
+                - ipa
+          - UTTypeIdentifier: com.rsa.pkcs-12
+            UTTypeDescription: P12 Certificate
+            UTTypeConformsTo:
+              - public.data
+            UTTypeTagSpecification:
+              public.filename-extension:
+                - p12
+          - UTTypeIdentifier: com.apple.mobileprovision
+            UTTypeDescription: Provisioning Profile
+            UTTypeConformsTo:
+              - public.data
+            UTTypeTagSpecification:
+              public.filename-extension:
+                - mobileprovision
