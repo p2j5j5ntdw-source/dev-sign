@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct CertificateView: View {
     @EnvironmentObject var certManager: CertificateManager
@@ -180,7 +181,6 @@ struct AddCertificateView: View {
                             
                             Divider().background(Color.gray)
                             
-                            // كلمة مرور P12
                             HStack {
                                 Image(systemName: "lock.fill")
                                     .foregroundColor(.gray)
@@ -253,22 +253,32 @@ struct AddCertificateView: View {
             }
             .fileImporter(
                 isPresented: $showP12Picker,
-                allowedContentTypes: [.init(filenameExtension: "p12")!]
+                allowedContentTypes: [UTType(filenameExtension: "p12") ?? .data],
+                allowsMultipleSelection: false
             ) { result in
-                if case .success(let url) = result {
+                switch result {
+                case .success(let urls):
+                    guard let url = urls.first else { return }
                     guard url.startAccessingSecurityScopedResource() else { return }
                     defer { url.stopAccessingSecurityScopedResource() }
                     p12Data = try? Data(contentsOf: url)
+                case .failure:
+                    break
                 }
             }
             .fileImporter(
                 isPresented: $showProvPicker,
-                allowedContentTypes: [.init(filenameExtension: "mobileprovision")!]
+                allowedContentTypes: [UTType(filenameExtension: "mobileprovision") ?? .data],
+                allowsMultipleSelection: false
             ) { result in
-                if case .success(let url) = result {
+                switch result {
+                case .success(let urls):
+                    guard let url = urls.first else { return }
                     guard url.startAccessingSecurityScopedResource() else { return }
                     defer { url.stopAccessingSecurityScopedResource() }
                     provData = try? Data(contentsOf: url)
+                case .failure:
+                    break
                 }
             }
             .alert("خطأ", isPresented: $showError) {
